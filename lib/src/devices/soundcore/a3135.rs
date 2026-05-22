@@ -26,7 +26,7 @@ soundcore_device!(
     },
     async |builder| {
         builder.module_collection().add_state_update();
-        builder.single_battery_level(14);
+        builder.single_battery_level(5);
         builder.a3135_serial_number_and_firmware_version();
     },
     {
@@ -81,7 +81,7 @@ mod tests {
         .await;
 
         device.assert_setting_values([
-            (SettingId::BatteryLevel, Cow::from("14/14").into()),
+            (SettingId::BatteryLevel, Cow::from("5/5").into()),
             (SettingId::FirmwareVersion, Cow::from("4.0.4").into()),
             (
                 SettingId::SerialNumber,

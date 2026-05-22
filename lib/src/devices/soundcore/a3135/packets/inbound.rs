@@ -29,8 +29,9 @@ use crate::{
 };
 
 /// Body layout (29 bytes):
-///   [0]       battery level (0–14)
-///   [1..7]    unknown (6 bytes)
+///   [0]       volume (0–?)
+///   [1]       battery level (0–5)
+///   [2..7]    unknown (5 bytes)
 ///   [7..12]   firmware version ASCII "X.Y.Z" (5 bytes)
 ///   [12..28]  serial number ASCII (16 bytes)
 ///   [28]      unknown (1 byte)
@@ -51,16 +52,19 @@ impl FromPacketBody for A3135StateUpdatePacket {
             "a3135 state update packet",
             map(
                 (
+                    le_u8, // volume
                     BatteryLevel::take,
-                    take(6usize),
+                    take(5usize),
                     a3135::structures::A3135FirmwareVersion::take,
                     SerialNumber::take,
                     le_u8,
                 ),
-                |(battery_level, _unknown1, firmware_version, serial_number, _unknown2)| Self {
-                    battery_level,
-                    firmware_version,
-                    serial_number,
+                |(_volume, battery_level, _unknown1, firmware_version, serial_number, _unknown2)| {
+                    Self {
+                        battery_level,
+                        firmware_version,
+                        serial_number,
+                    }
                 },
             ),
         )
@@ -76,8 +80,9 @@ impl ToPacket for A3135StateUpdatePacket {
     }
 
     fn body(&self) -> Vec<u8> {
-        iter::once(self.battery_level.0)
-            .chain([0u8; 6])
+        iter::once(0u8) // volume (unknown)
+            .chain(iter::once(self.battery_level.0))
+            .chain([0u8; 5])
             .chain(self.firmware_version.bytes())
             .chain(self.serial_number.as_str().as_bytes().iter().copied())
             .chain(iter::once(0u8))
@@ -136,7 +141,7 @@ mod tests {
         ];
         let (_, packet) =
             A3135StateUpdatePacket::take::<VerboseError<_>>(body).expect("parse failed");
-        assert_eq!(packet.battery_level.0, 14);
+        assert_eq!(packet.battery_level.0, 5);
         assert_eq!(packet.firmware_version.to_string(), "4.0.4");
         assert_eq!(packet.serial_number.as_str(), "ACCLVH2F34202893");
     }
