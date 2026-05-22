@@ -15,6 +15,7 @@ pub struct A3135State {
     battery_level: BatteryLevel,
     volume: a3135::structures::Volume,
     ldac: Ldac,
+    led_brightness: a3135::structures::LedBrightness,
     auto_power_off: AutoPowerOff,
     voice_prompt: VoicePrompt,
     power_off_pending: a3135::structures::PowerOffPending,
@@ -23,11 +24,16 @@ pub struct A3135State {
 }
 
 impl A3135State {
-    pub fn new(packet: A3135StateUpdatePacket, ldac: Ldac) -> Self {
+    pub fn new(
+        packet: A3135StateUpdatePacket,
+        ldac: Ldac,
+        led_brightness: a3135::structures::LedBrightness,
+    ) -> Self {
         Self {
             battery_level: packet.battery_level,
             volume: packet.volume,
             ldac,
+            led_brightness,
             auto_power_off: AutoPowerOff::default(),
             voice_prompt: VoicePrompt::default(),
             power_off_pending: Default::default(),

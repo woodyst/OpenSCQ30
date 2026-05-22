@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use uuid::uuid;
 
 use crate::connection::RfcommServiceSelectionStrategy;
-use crate::devices::soundcore::a3135::packets::inbound::{A3135LdacStatePacket, A3135StateUpdatePacket};
+use crate::devices::soundcore::a3135::packets::inbound::{
+    A3135BrightnessPacket, A3135LdacStatePacket, A3135StateUpdatePacket,
+    REQUEST_BRIGHTNESS_COMMAND,
+};
 use crate::devices::soundcore::a3135::state::A3135State;
 use crate::devices::soundcore::common::device::SoundcoreDeviceConfig;
 use crate::devices::soundcore::common::macros::soundcore_device;
@@ -26,7 +29,15 @@ soundcore_device!(
             .send_with_response(&packet::Outbound::new(REQUEST_LDAC_STATE_COMMAND, Vec::new()))
             .await?
             .try_to_packet()?;
-        Ok(A3135State::new(state_update_packet, ldac_packet.ldac))
+        let brightness_packet: A3135BrightnessPacket = packet_io
+            .send_with_response(&packet::Outbound::new(REQUEST_BRIGHTNESS_COMMAND, Vec::new()))
+            .await?
+            .try_to_packet()?;
+        Ok(A3135State::new(
+            state_update_packet,
+            ldac_packet.ldac,
+            brightness_packet.brightness,
+        ))
     },
     async |builder| {
         builder.module_collection().add_state_update();
@@ -37,6 +48,7 @@ soundcore_device!(
         builder.voice_prompt();
         builder.auto_power_off(AutoPowerOffDuration::five_ten_twenty_sixty());
         builder.a3135_power_off();
+        builder.a3135_brightness();
     },
     {
         HashMap::from([
@@ -47,6 +59,10 @@ soundcore_device!(
             (
                 REQUEST_LDAC_STATE_COMMAND,
                 A3135LdacStatePacket::default().to_packet(),
+            ),
+            (
+                REQUEST_BRIGHTNESS_COMMAND,
+                A3135BrightnessPacket::default().to_packet(),
             ),
         ])
     },
@@ -99,6 +115,13 @@ mod tests {
                         vec![0x01, 0x00], // 0x01=LDAC active, 0x00=unknown extra byte
                     ),
                 ),
+                (
+                    REQUEST_BRIGHTNESS_COMMAND,
+                    packet::Inbound::new(
+                        REQUEST_BRIGHTNESS_COMMAND,
+                        vec![0x46], // 0x46=Medium
+                    ),
+                ),
             ]),
             CONFIG,
         )
@@ -113,6 +136,7 @@ mod tests {
             ),
             (SettingId::Volume, 14i32.into()),
             (SettingId::Ldac, true.into()),
+            (SettingId::LedBrightness, Cow::from("medium").into()),
         ]);
     }
 }

@@ -28,6 +28,8 @@ use crate::{
     },
 };
 
+pub const REQUEST_BRIGHTNESS_COMMAND: packet::Command = packet::Command([0x10, 0x93]);
+
 /// Body layout (29 bytes):
 ///   [0]       volume (0–31)
 ///   [1]       battery level (0–5)
@@ -114,6 +116,40 @@ impl ModuleCollection<A3135State> {
             packet::inbound::STATE_COMMAND,
             Box::new(StateUpdatePacketHandler {}),
         );
+    }
+}
+
+/// CMD [10 93] response: 1 byte (current brightness level)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct A3135BrightnessPacket {
+    pub brightness: a3135::structures::LedBrightness,
+}
+
+impl FromPacketBody for A3135BrightnessPacket {
+    type DirectionMarker = packet::InboundMarker;
+
+    fn take<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+        input: &'a [u8],
+    ) -> IResult<&'a [u8], Self, E> {
+        context(
+            "A3135BrightnessPacket",
+            map(a3135::structures::LedBrightness::take, |brightness| Self {
+                brightness,
+            }),
+        )
+        .parse_complete(input)
+    }
+}
+
+impl ToPacket for A3135BrightnessPacket {
+    type DirectionMarker = packet::InboundMarker;
+
+    fn command(&self) -> Command {
+        REQUEST_BRIGHTNESS_COMMAND
+    }
+
+    fn body(&self) -> Vec<u8> {
+        self.brightness.bytes().collect()
     }
 }
 

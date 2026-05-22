@@ -209,3 +209,9 @@ firmest = Firmest
 
 dual-connections = Dual Connections
 dual-connections-devices = Dual Connections Devices
+
+off = Off
+low = Low
+high = High
+
+led-brightness = LED Brightness

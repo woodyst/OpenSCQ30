@@ -142,6 +142,7 @@ pub enum SettingId {
     Ldac,
     DualConnections,
     DualConnectionsDevices,
+    LedBrightness,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

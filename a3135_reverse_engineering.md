@@ -183,32 +183,19 @@ Amplitude: 0x00 (min, 0x3C = –6 dB), 0x78 = 0 dB, 0xB4 = +6 dB (each unit = 0.
 - Firmware version → body[7..12]
 - Serial number → body[12..28]
 - Volume (0-31) → body[0], SET `CMD [01 88]`
-- Sound mode / LDAC → body[5] (0x00=LDAC, 0x01=Combine), SET `CMD [01 FF]`
+- Sound mode / LDAC → `CMD [01 7F]` GET (2-byte response), SET `CMD [01 FF]`
 - Voice prompts → SET `CMD [01 90]` (initial state unknown, defaults to off)
 - Auto power-off → SET `CMD [01 86]` (initial state unknown, defaults to disabled)
 - Power off action → `CMD [01 89]`
+- LED Brightness → `CMD [10 93]` GET, `CMD [10 92]` SET (Off/Low/Medium/High)
 
 ## 🔲 TO IMPLEMENT
 
-Priority order for implementation:
+1. **Auto power-off** (read) — initial state always shows disabled; no confirmed GET command
 
-1. **Brightness** (read+write) — `CMD [10 92]` SET, `[10 93]` GET
-   - Values: Off=0x00, Low=0x14, Medium=0x46, High=0x64
-   - NOT in state body (must use GET command to read current)
+2. **Voice prompts** (read) — initial state always shows off; not in state body
 
-2. **Auto power-off** (read+write) — `CMD [01 86]`
-   - Body: `[enabled_byte, timer_index]`
-   - NOT in state body
-
-3. **Voice prompts** (read+write) — `CMD [01 90]`
-   - Body: `00`=OFF, `01`=ON
-   - NOT in state body
-
-4. **Sound mode** (read+write) — `CMD [01 FF]`
-   - Body (SET): `00`=Combine, `01`=LDAC
-   - State body[5]: `0x00`=LDAC, `0x01`=Combine
-
-5. **Adaptive direction** (read+write) — `CMD [02 8A]` + `[02 8C]`
+3. **Adaptive direction** (read+write) — `CMD [02 8A]` + `[02 8C]`
    - Body: `00`=OFF, `01`=ON; always follow with CMD [02 8C] empty
    - NOT in state body (but body[4] is suspicious at 0x01)
 

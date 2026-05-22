@@ -18,6 +18,7 @@ use crate::{
 
 use super::structures::A3135FirmwareVersion;
 
+mod brightness;
 mod power_off;
 mod volume;
 
@@ -110,5 +111,15 @@ where
     pub fn a3135_power_off(&mut self) {
         let packet_io = self.packet_io_controller().clone();
         self.module_collection().add_a3135_power_off(packet_io);
+    }
+}
+
+impl<StateType> SoundcoreDeviceBuilder<StateType>
+where
+    StateType: Has<a3135::structures::LedBrightness> + Send + Sync + Clone + 'static,
+{
+    pub fn a3135_brightness(&mut self) {
+        let packet_io = self.packet_io_controller().clone();
+        self.module_collection().add_a3135_brightness(packet_io);
     }
 }
