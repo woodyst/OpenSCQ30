@@ -22,17 +22,15 @@ pub async fn new_session(db_path: String) -> Result<OpenSCQ30Session, crate::Ope
 
 #[uniffi::export(async_runtime = "tokio")]
 pub async fn new_session_with_in_memory_db() -> Result<OpenSCQ30Session, crate::OpenSCQ30Error> {
-    cfg_select! {
-        debug_assertions => {
-            let inner_session = LibSession::new_with_in_memory_db().await?;
-            Ok(OpenSCQ30Session {
-                inner: inner_session,
-            })
-        }
-        _ => {
-            unimplemented!()
-        }
+    #[cfg(debug_assertions)]
+    {
+        let inner_session = LibSession::new_with_in_memory_db().await?;
+        return Ok(OpenSCQ30Session {
+            inner: inner_session,
+        });
     }
+    #[cfg(not(debug_assertions))]
+    unimplemented!()
 }
 
 #[uniffi::export(async_runtime = "tokio")]
