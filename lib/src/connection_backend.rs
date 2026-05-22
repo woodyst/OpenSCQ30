@@ -1,17 +1,12 @@
 use crate::api::connection::{self, RfcommBackend};
 
-cfg_select! {
-    target_os = "linux" => {
-        mod linux;
+#[cfg(target_os = "linux")]
+mod linux;
+#[cfg(target_os = "windows")]
+mod windows;
+#[cfg(not(any(target_os = "linux", target_os = "windows")))]
+mod none;
 
-    }
-    target_os = "windows" => {
-        mod windows;
-    }
-    _ => {
-        mod none;
-    }
-}
 #[cfg(test)]
 pub(crate) mod mock;
 
@@ -22,16 +17,17 @@ pub trait ConnectionBackends {
     fn rfcomm(&self) -> impl Future<Output = connection::Result<Self::Rfcomm>> + Send;
 }
 
+#[cfg(target_os = "linux")]
 pub fn default_backends() -> Option<impl ConnectionBackends> {
-    cfg_select! {
-        target_os = "linux" => {
-            Some(linux::PlatformConnectionBackends)
-        }
-        target_os = "windows" => {
-            Some(windows::PlatformConnectionBackends)
-        }
-        _ => {
-            None::<none::NoneConnectionBackends>
-        }
-    }
+    Some(linux::PlatformConnectionBackends)
+}
+
+#[cfg(target_os = "windows")]
+pub fn default_backends() -> Option<impl ConnectionBackends> {
+    Some(windows::PlatformConnectionBackends)
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "windows")))]
+pub fn default_backends() -> Option<impl ConnectionBackends> {
+    None::<none::NoneConnectionBackends>
 }
