@@ -143,6 +143,7 @@ pub enum SettingId {
     DualConnections,
     DualConnectionsDevices,
     LedBrightness,
+    AdaptiveDirection,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

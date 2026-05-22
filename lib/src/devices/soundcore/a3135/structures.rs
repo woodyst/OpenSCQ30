@@ -63,6 +63,9 @@ impl Volume {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct PowerOffPending(pub bool);
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct AdaptiveDirection(pub bool);
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, EnumIter, IntoStaticStr)]
 pub enum LedBrightness {
     #[default]

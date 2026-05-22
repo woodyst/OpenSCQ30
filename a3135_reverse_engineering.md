@@ -188,6 +188,7 @@ Amplitude: 0x00 (min, 0x3C = –6 dB), 0x78 = 0 dB, 0xB4 = +6 dB (each unit = 0.
 - Auto power-off → SET `CMD [01 86]` (initial state unknown, defaults to disabled)
 - Power off action → `CMD [01 89]`
 - LED Brightness → `CMD [10 93]` GET, `CMD [10 92]` SET (Off/Low/Medium/High)
+- Adaptive Direction → `CMD [02 8A]` SET + `CMD [02 8C]` confirm (defaults to off; no GET)
 
 ## 🔲 TO IMPLEMENT
 
@@ -195,7 +196,7 @@ Amplitude: 0x00 (min, 0x3C = –6 dB), 0x78 = 0 dB, 0xB4 = +6 dB (each unit = 0.
 
 2. **Voice prompts** (read) — initial state always shows off; not in state body
 
-3. **Adaptive direction** (read+write) — `CMD [02 8A]` + `[02 8C]`
+3. **EQ preset + custom EQ** — `CMD [02 8B]` preset, `CMD [02 89]` GET, `CMD [02 8D]` SET
    - Body: `00`=OFF, `01`=ON; always follow with CMD [02 8C] empty
    - NOT in state body (but body[4] is suspicious at 0x01)
 

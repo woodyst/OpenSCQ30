@@ -11,3 +11,11 @@ pub fn power_off() -> packet::Outbound {
 pub fn set_brightness(brightness: a3135::structures::LedBrightness) -> packet::Outbound {
     packet::Outbound::new(packet::Command([0x10, 0x92]), brightness.bytes().collect())
 }
+
+pub fn set_adaptive_direction(enabled: bool) -> packet::Outbound {
+    packet::Outbound::new(packet::Command([0x02, 0x8A]), vec![enabled as u8])
+}
+
+pub fn confirm_adaptive_direction() -> packet::Outbound {
+    packet::Outbound::new(packet::Command([0x02, 0x8C]), Vec::new())
+}

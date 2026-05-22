@@ -215,3 +215,4 @@ low = Low
 high = High
 
 led-brightness = LED Brightness
+adaptive-direction = Adaptive Direction
