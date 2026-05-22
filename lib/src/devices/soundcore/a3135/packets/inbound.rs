@@ -1,4 +1,4 @@
-use std::iter;
+use std::{array, iter};
 
 use async_trait::async_trait;
 use nom::{
@@ -23,7 +23,7 @@ use crate::{
             },
             packet_manager::PacketHandler,
             state::Update,
-            structures::{BatteryLevel, Ldac, SerialNumber},
+            structures::{BatteryLevel, EqualizerConfiguration, Ldac, SerialNumber, VolumeAdjustments},
         },
     },
 };
@@ -186,6 +186,69 @@ impl ToPacket for A3135LdacStatePacket {
 
     fn body(&self) -> Vec<u8> {
         vec![self.ldac.bytes()[0], 0x00]
+    }
+}
+
+pub const REQUEST_EQ_COMMAND: packet::Command = packet::Command([0x02, 0x89]);
+
+/// CMD [02 89] response: 57 bytes
+/// [0] unknown [1] unknown [2] active_preset_index
+/// [3..21] Custom profile 1: 9 pairs of [amp_byte, freq_byte]
+/// [21..57] Custom profiles 2 and 3 (ignored)
+///
+/// Amplitude encoding: device byte 0x3C=min(-6dB), 0x78=0dB, 0xB4=max(+6dB)
+/// adj (tenths of dB) = device_byte - 120
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct A3135EqPacket {
+    pub equalizer_configuration: EqualizerConfiguration<1, 9, -60, 60, 1>,
+}
+
+impl FromPacketBody for A3135EqPacket {
+    type DirectionMarker = packet::InboundMarker;
+
+    fn take<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+        input: &'a [u8],
+    ) -> IResult<&'a [u8], Self, E> {
+        context(
+            "A3135EqPacket",
+            map(take(57usize), |bytes: &[u8]| {
+                let active_preset = bytes[2] as u16;
+                // bytes[3..21]: 9 pairs of [amp_byte, freq_byte] for custom profile 1
+                let adj: [i16; 9] = array::from_fn(|i| bytes[3 + i * 2] as i16 - 120);
+                let volume_adjustments = VolumeAdjustments::new(adj);
+                Self {
+                    equalizer_configuration: EqualizerConfiguration::new(
+                        active_preset,
+                        [volume_adjustments],
+                    ),
+                }
+            }),
+        )
+        .parse_complete(input)
+    }
+}
+
+impl ToPacket for A3135EqPacket {
+    type DirectionMarker = packet::InboundMarker;
+
+    fn command(&self) -> Command {
+        REQUEST_EQ_COMMAND
+    }
+
+    fn body(&self) -> Vec<u8> {
+        // Default response: active preset = 0 (Balanced), all bands at 0dB (0x78)
+        const FREQ_CODES: [u8; 9] = [0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x01];
+        let preset = self.equalizer_configuration.preset_id() as u8;
+        let amps = self.equalizer_configuration.volume_adjustments_channel_1().bytes();
+        let mut body = vec![0x00, 0x00, preset];
+        for i in 0..9 {
+            body.push(amps[i] + 0x3C); // convert: adj+60+60 = adj+120 = device byte
+            body.push(FREQ_CODES[i]);
+        }
+        // Two more empty profiles (36 bytes)
+        body.extend(std::iter::repeat(0x78u8).take(9).flat_map(|a| [a, 0x07u8]));
+        body.extend(std::iter::repeat(0x78u8).take(9).flat_map(|a| [a, 0x07u8]));
+        body
     }
 }
 

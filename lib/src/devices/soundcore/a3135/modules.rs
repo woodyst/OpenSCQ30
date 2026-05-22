@@ -20,6 +20,7 @@ use super::structures::A3135FirmwareVersion;
 
 mod adaptive_direction;
 mod brightness;
+pub mod equalizer;
 mod power_off;
 mod volume;
 

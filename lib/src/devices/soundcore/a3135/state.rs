@@ -4,11 +4,11 @@ use crate::devices::soundcore::{
     a3135,
     common::{
         state::Update,
-        structures::{AutoPowerOff, BatteryLevel, Ldac, SerialNumber, VoicePrompt},
+        structures::{AutoPowerOff, BatteryLevel, EqualizerConfiguration, Ldac, SerialNumber, VoicePrompt},
     },
 };
 
-use super::packets::inbound::A3135StateUpdatePacket;
+use super::packets::inbound::{A3135EqPacket, A3135StateUpdatePacket};
 
 #[derive(Debug, Clone, PartialEq, Eq, Has)]
 pub struct A3135State {
@@ -20,6 +20,7 @@ pub struct A3135State {
     voice_prompt: VoicePrompt,
     adaptive_direction: a3135::structures::AdaptiveDirection,
     power_off_pending: a3135::structures::PowerOffPending,
+    equalizer_configuration: EqualizerConfiguration<1, 9, -60, 60, 1>,
     firmware_version: a3135::structures::A3135FirmwareVersion,
     serial_number: SerialNumber,
 }
@@ -29,6 +30,7 @@ impl A3135State {
         packet: A3135StateUpdatePacket,
         ldac: Ldac,
         led_brightness: a3135::structures::LedBrightness,
+        eq_packet: A3135EqPacket,
     ) -> Self {
         Self {
             battery_level: packet.battery_level,
@@ -39,6 +41,7 @@ impl A3135State {
             auto_power_off: AutoPowerOff::default(),
             voice_prompt: VoicePrompt::default(),
             power_off_pending: Default::default(),
+            equalizer_configuration: eq_packet.equalizer_configuration,
             firmware_version: packet.firmware_version,
             serial_number: packet.serial_number,
         }

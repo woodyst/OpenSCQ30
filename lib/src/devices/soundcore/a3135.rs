@@ -4,8 +4,8 @@ use uuid::uuid;
 
 use crate::connection::RfcommServiceSelectionStrategy;
 use crate::devices::soundcore::a3135::packets::inbound::{
-    A3135BrightnessPacket, A3135LdacStatePacket, A3135StateUpdatePacket,
-    REQUEST_BRIGHTNESS_COMMAND,
+    A3135BrightnessPacket, A3135EqPacket, A3135LdacStatePacket, A3135StateUpdatePacket,
+    REQUEST_BRIGHTNESS_COMMAND, REQUEST_EQ_COMMAND,
 };
 use crate::devices::soundcore::a3135::state::A3135State;
 use crate::devices::soundcore::common::device::SoundcoreDeviceConfig;
@@ -33,10 +33,15 @@ soundcore_device!(
             .send_with_response(&packet::Outbound::new(REQUEST_BRIGHTNESS_COMMAND, Vec::new()))
             .await?
             .try_to_packet()?;
+        let eq_packet: A3135EqPacket = packet_io
+            .send_with_response(&packet::Outbound::new(REQUEST_EQ_COMMAND, Vec::new()))
+            .await?
+            .try_to_packet()?;
         Ok(A3135State::new(
             state_update_packet,
             ldac_packet.ldac,
             brightness_packet.brightness,
+            eq_packet,
         ))
     },
     async |builder| {
@@ -50,6 +55,7 @@ soundcore_device!(
         builder.a3135_power_off();
         builder.a3135_brightness();
         builder.a3135_adaptive_direction();
+        builder.a3135_equalizer().await;
     },
     {
         HashMap::from([
@@ -64,6 +70,10 @@ soundcore_device!(
             (
                 REQUEST_BRIGHTNESS_COMMAND,
                 A3135BrightnessPacket::default().to_packet(),
+            ),
+            (
+                REQUEST_EQ_COMMAND,
+                A3135EqPacket::default().to_packet(),
             ),
         ])
     },
@@ -121,6 +131,22 @@ mod tests {
                     packet::Inbound::new(
                         REQUEST_BRIGHTNESS_COMMAND,
                         vec![0x46], // 0x46=Medium
+                    ),
+                ),
+                (
+                    REQUEST_EQ_COMMAND,
+                    packet::Inbound::new(
+                        REQUEST_EQ_COMMAND,
+                        // 57 bytes: [0x00, 0x00, active_preset=0x00] + 3 profiles × 18 bytes
+                        // Profile 1: 9 pairs [0x78(0dB), freq_code]
+                        {
+                            let mut v = vec![0x00u8, 0x00, 0x00]; // header + active=Balanced
+                            let freq_codes: [u8; 9] = [0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x01];
+                            for f in freq_codes { v.push(0x78); v.push(f); } // profile 1 (18 bytes)
+                            v.extend_from_slice(&[0x78u8; 18]); // profile 2 (ignored)
+                            v.extend_from_slice(&[0x78u8; 18]); // profile 3 (ignored)
+                            v
+                        },
                     ),
                 ),
             ]),

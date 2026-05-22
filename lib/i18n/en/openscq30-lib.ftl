@@ -216,3 +216,6 @@ high = High
 
 led-brightness = LED Brightness
 adaptive-direction = Adaptive Direction
+
+balanced = Balanced
+extra-bass = Extra Bass
