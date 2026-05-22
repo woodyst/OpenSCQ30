@@ -56,6 +56,8 @@ where
 #[derive(IntoStaticStr)]
 #[allow(clippy::enum_variant_names)]
 pub enum AutoPowerOffDuration {
+    #[strum(serialize = "5m")]
+    FiveMinutes,
     #[strum(serialize = "10m")]
     TenMinutes,
     #[strum(serialize = "20m")]
@@ -73,6 +75,7 @@ pub enum AutoPowerOffDuration {
 impl Translate for AutoPowerOffDuration {
     fn translate(&self) -> String {
         match self {
+            Self::FiveMinutes => fl!("x-minutes", minutes = 5),
             Self::TenMinutes => fl!("x-minutes", minutes = 10),
             Self::TwentyMinutes => fl!("x-minutes", minutes = 20),
             Self::ThirtyMinutes => fl!("x-minutes", minutes = 30),
@@ -84,6 +87,15 @@ impl Translate for AutoPowerOffDuration {
 }
 
 impl AutoPowerOffDuration {
+    pub fn five_ten_twenty_sixty() -> &'static [Self] {
+        &[
+            Self::FiveMinutes,
+            Self::TenMinutes,
+            Self::TwentyMinutes,
+            Self::SixtyMinutes,
+        ]
+    }
+
     pub fn half_hour_increments() -> &'static [Self] {
         &[
             Self::ThirtyMinutes,

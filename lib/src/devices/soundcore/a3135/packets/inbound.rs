@@ -19,17 +19,17 @@ use crate::{
             packet::{
                 self, Command,
                 inbound::{FromPacketBody, TryToPacket},
-                outbound::ToPacket,
+                outbound::{ToPacket, REQUEST_LDAC_STATE_COMMAND},
             },
             packet_manager::PacketHandler,
             state::Update,
-            structures::{BatteryLevel, SerialNumber},
+            structures::{BatteryLevel, Ldac, SerialNumber},
         },
     },
 };
 
 /// Body layout (29 bytes):
-///   [0]       volume (0–?)
+///   [0]       volume (0–31)
 ///   [1]       battery level (0–5)
 ///   [2..7]    unknown (5 bytes)
 ///   [7..12]   firmware version ASCII "X.Y.Z" (5 bytes)
@@ -37,6 +37,7 @@ use crate::{
 ///   [28]      unknown (1 byte)
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct A3135StateUpdatePacket {
+    pub volume: a3135::structures::Volume,
     pub battery_level: BatteryLevel,
     pub firmware_version: a3135::structures::A3135FirmwareVersion,
     pub serial_number: SerialNumber,
@@ -52,15 +53,16 @@ impl FromPacketBody for A3135StateUpdatePacket {
             "a3135 state update packet",
             map(
                 (
-                    le_u8, // volume
-                    BatteryLevel::take,
-                    take(5usize),
-                    a3135::structures::A3135FirmwareVersion::take,
-                    SerialNumber::take,
-                    le_u8,
+                    a3135::structures::Volume::take,                // [0] volume
+                    BatteryLevel::take,                             // [1] battery
+                    take(5usize),                                   // [2..7] unknown
+                    a3135::structures::A3135FirmwareVersion::take,  // [7..12]
+                    SerialNumber::take,                             // [12..28]
+                    le_u8,                                          // [28] unknown
                 ),
-                |(_volume, battery_level, _unknown1, firmware_version, serial_number, _unknown2)| {
+                |(volume, battery_level, _unknown, firmware_version, serial_number, _unknown2)| {
                     Self {
+                        volume,
                         battery_level,
                         firmware_version,
                         serial_number,
@@ -80,9 +82,10 @@ impl ToPacket for A3135StateUpdatePacket {
     }
 
     fn body(&self) -> Vec<u8> {
-        iter::once(0u8) // volume (unknown)
+        self.volume
+            .bytes()
             .chain(iter::once(self.battery_level.0))
-            .chain([0u8; 5])
+            .chain([0u8; 5]) // unknown [2..7]
             .chain(self.firmware_version.bytes())
             .chain(self.serial_number.as_str().as_bytes().iter().copied())
             .chain(iter::once(0u8))
@@ -111,6 +114,42 @@ impl ModuleCollection<A3135State> {
             packet::inbound::STATE_COMMAND,
             Box::new(StateUpdatePacketHandler {}),
         );
+    }
+}
+
+/// CMD [01 7F] response: 2 bytes [ldac_state, unknown]
+/// 0x00=Combine, 0x01=LDAC active
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct A3135LdacStatePacket {
+    pub ldac: Ldac,
+}
+
+impl FromPacketBody for A3135LdacStatePacket {
+    type DirectionMarker = packet::InboundMarker;
+
+    fn take<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+        input: &'a [u8],
+    ) -> IResult<&'a [u8], Self, E> {
+        context(
+            "A3135LdacStatePacket",
+            map(
+                (Ldac::take, le_u8), // [0] ldac state, [1] unknown extra byte
+                |(ldac, _unknown)| Self { ldac },
+            ),
+        )
+        .parse_complete(input)
+    }
+}
+
+impl ToPacket for A3135LdacStatePacket {
+    type DirectionMarker = packet::InboundMarker;
+
+    fn command(&self) -> Command {
+        REQUEST_LDAC_STATE_COMMAND
+    }
+
+    fn body(&self) -> Vec<u8> {
+        vec![self.ldac.bytes()[0], 0x00]
     }
 }
 

@@ -1,19 +1,25 @@
 use async_trait::async_trait;
 use openscq30_lib_has::Has;
-use strum::{EnumIter, EnumString, IntoStaticStr, IntoEnumIterator};
+use strum::{EnumIter, EnumString, IntoEnumIterator, IntoStaticStr};
 
 use crate::{
     api::settings::{CategoryId, Setting, SettingId, Value},
-    devices::soundcore::common::{
-        device::SoundcoreDeviceBuilder,
-        modules::ModuleCollection,
-        settings_manager::{SettingHandler, SettingHandlerError, SettingHandlerResult},
-        structures::SerialNumber,
+    devices::soundcore::{
+        a3135,
+        common::{
+            device::SoundcoreDeviceBuilder,
+            modules::ModuleCollection,
+            settings_manager::{SettingHandler, SettingHandlerError, SettingHandlerResult},
+            structures::SerialNumber,
+        },
     },
     macros::enum_subset,
 };
 
 use super::structures::A3135FirmwareVersion;
+
+mod power_off;
+mod volume;
 
 enum_subset!(
     SettingId,
@@ -83,5 +89,26 @@ where
     pub fn a3135_serial_number_and_firmware_version(&mut self) {
         self.module_collection()
             .add_a3135_serial_number_and_firmware_version();
+    }
+}
+
+impl<StateType> SoundcoreDeviceBuilder<StateType>
+where
+    StateType: Has<a3135::structures::Volume> + Send + Sync + Clone + 'static,
+{
+    pub fn a3135_volume(&mut self, max_volume: u8) {
+        let packet_io = self.packet_io_controller().clone();
+        self.module_collection()
+            .add_a3135_volume(packet_io, max_volume);
+    }
+}
+
+impl<StateType> SoundcoreDeviceBuilder<StateType>
+where
+    StateType: Has<a3135::structures::PowerOffPending> + Send + Sync + Clone + 'static,
+{
+    pub fn a3135_power_off(&mut self) {
+        let packet_io = self.packet_io_controller().clone();
+        self.module_collection().add_a3135_power_off(packet_io);
     }
 }
