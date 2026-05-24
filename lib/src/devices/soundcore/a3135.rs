@@ -54,7 +54,7 @@ soundcore_device!(
         builder.auto_power_off(AutoPowerOffDuration::five_ten_twenty_sixty());
         builder.a3135_power_off();
         builder.a3135_brightness();
-        builder.a3135_adaptive_direction();
+        builder.a3135_adaptive_direction_readonly();
         builder.a3135_equalizer().await;
     },
     {

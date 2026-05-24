@@ -130,9 +130,7 @@ impl<StateType> SoundcoreDeviceBuilder<StateType>
 where
     StateType: Has<a3135::structures::AdaptiveDirection> + Send + Sync + Clone + 'static,
 {
-    pub fn a3135_adaptive_direction(&mut self) {
-        let packet_io = self.packet_io_controller().clone();
-        self.module_collection()
-            .add_a3135_adaptive_direction(packet_io);
+    pub fn a3135_adaptive_direction_readonly(&mut self) {
+        self.module_collection().add_a3135_adaptive_direction();
     }
 }
