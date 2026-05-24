@@ -72,9 +72,11 @@ impl<
                 PRESET_BANDS <= BANDS,
                 "there can't be more preset bands than there are total bands",
             );
+            // PRESET_BANDS = 0 is allowed for devices with hardware-only presets: selecting such a
+            // preset only changes the preset_id and preserves the current band values (unwrap_or path).
             assert!(
-                PRESET_BANDS >= VISIBLE_BANDS,
-                "there can't be fewer preset bands than visible bands",
+                PRESET_BANDS == 0 || PRESET_BANDS >= VISIBLE_BANDS,
+                "there can't be fewer preset bands than visible bands (unless preset bands = 0)",
             );
         }
         Self {

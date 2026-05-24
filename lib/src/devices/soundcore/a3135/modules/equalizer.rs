@@ -74,7 +74,9 @@ where
     }
 }
 
-fn module_settings() -> EqualizerModuleSettings<9, 9, -60, 60, 1> {
+// PRESET_BANDS = 0: these are hardware presets — the device applies the curve internally.
+// Selecting a preset only changes preset_id; band values in state are preserved (see setting_handler).
+fn module_settings() -> EqualizerModuleSettings<9, 0, -60, 60, 1> {
     EqualizerModuleSettings {
         custom_preset_id: CUSTOM_PRESET_ID,
         band_hz: [80, 150, 300, 500, 1000, 2000, 4500, 8500, 15000],
@@ -83,25 +85,25 @@ fn module_settings() -> EqualizerModuleSettings<9, 9, -60, 60, 1> {
                 name: "Balanced",
                 localized_name: || fl!("balanced"),
                 id: 0x00,
-                volume_adjustments: VolumeAdjustments::new([0; 9]),
+                volume_adjustments: VolumeAdjustments::new([]),
             },
             EqualizerPreset {
                 name: "ExtraBass",
                 localized_name: || fl!("extra-bass"),
                 id: 0x01,
-                volume_adjustments: VolumeAdjustments::new([0; 9]),
+                volume_adjustments: VolumeAdjustments::new([]),
             },
             EqualizerPreset {
                 name: "Voice",
                 localized_name: || fl!("voice"),
                 id: 0x02,
-                volume_adjustments: VolumeAdjustments::new([0; 9]),
+                volume_adjustments: VolumeAdjustments::new([]),
             },
             EqualizerPreset {
                 name: "SoundcoreSignature",
                 localized_name: || fl!("soundcore-signature"),
                 id: 0x03,
-                volume_adjustments: VolumeAdjustments::new([0; 9]),
+                volume_adjustments: VolumeAdjustments::new([]),
             },
         ],
     }
@@ -118,7 +120,7 @@ where
         device_model: DeviceModel,
         change_notify: watch::Sender<()>,
     ) {
-        self.add_equalizer_with_custom_state_modifier(
+        self.add_equalizer_with_custom_state_modifier::<1, 9, 9, 0, -60, 60, 1>(
             database,
             device_model,
             change_notify,
