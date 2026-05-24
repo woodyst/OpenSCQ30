@@ -43,9 +43,10 @@ pub struct Packet<D> {
 
 impl<D> std::fmt::Debug for Packet<D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let body_hex: Vec<String> = self.body.iter().map(|b| format!("{b:02X}")).collect();
         f.debug_struct("Packet")
             .field("command", &self.command)
-            .field("body", &self.body)
+            .field("body", &body_hex.join(" "))
             .finish()
     }
 }

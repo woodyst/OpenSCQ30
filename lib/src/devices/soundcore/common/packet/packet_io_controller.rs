@@ -117,6 +117,7 @@ impl PacketIOController {
 
         // retry
         for i in 1..=3 {
+            tracing::debug!("sending packet {packet:?}");
             self.connection
                 .write(&packet.bytes(self.checksum_kind))
                 .await?;
@@ -190,6 +191,7 @@ impl PacketIOController {
     }
 
     pub async fn send_without_response(&self, packet: &packet::Outbound) -> device::Result<()> {
+        tracing::debug!("sending packet (no response) {packet:?}");
         self.connection
             .write(&packet.bytes(self.checksum_kind))
             .await?;
