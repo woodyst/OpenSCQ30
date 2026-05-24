@@ -39,7 +39,7 @@ impl A3135State {
             led_brightness,
             adaptive_direction: Default::default(),
             auto_power_off: AutoPowerOff::default(),
-            voice_prompt: VoicePrompt::default(),
+            voice_prompt: packet.voice_prompt,
             power_off_pending: Default::default(),
             equalizer_configuration: eq_packet.equalizer_configuration,
             firmware_version: packet.firmware_version,
@@ -53,6 +53,7 @@ impl Update<A3135StateUpdatePacket> for A3135State {
         let A3135StateUpdatePacket {
             volume,
             battery_level,
+            voice_prompt: _,
             firmware_version,
             serial_number,
         } = partial;

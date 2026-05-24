@@ -23,7 +23,7 @@ use crate::{
             },
             packet_manager::PacketHandler,
             state::Update,
-            structures::{BatteryLevel, EqualizerConfiguration, Ldac, SerialNumber, VolumeAdjustments},
+            structures::{BatteryLevel, EqualizerConfiguration, Ldac, SerialNumber, VoicePrompt, VolumeAdjustments},
         },
     },
 };
@@ -33,7 +33,11 @@ pub const REQUEST_BRIGHTNESS_COMMAND: packet::Command = packet::Command([0x10, 0
 /// Body layout (29 bytes):
 ///   [0]       volume (0–31)
 ///   [1]       battery level (0–5)
-///   [2..7]    unknown (5 bytes)
+///   [2]       unknown
+///   [3]       unknown
+///   [4]       voice prompt (0=off, 1=on)
+///   [5]       unknown
+///   [6]       unknown (possibly auto power off duration)
 ///   [7..12]   firmware version ASCII "X.Y.Z" (5 bytes)
 ///   [12..28]  serial number ASCII (16 bytes)
 ///   [28]      unknown (1 byte)
@@ -41,6 +45,7 @@ pub const REQUEST_BRIGHTNESS_COMMAND: packet::Command = packet::Command([0x10, 0
 pub struct A3135StateUpdatePacket {
     pub volume: a3135::structures::Volume,
     pub battery_level: BatteryLevel,
+    pub voice_prompt: VoicePrompt,
     pub firmware_version: a3135::structures::A3135FirmwareVersion,
     pub serial_number: SerialNumber,
 }
@@ -57,15 +62,20 @@ impl FromPacketBody for A3135StateUpdatePacket {
                 (
                     a3135::structures::Volume::take,                // [0] volume
                     BatteryLevel::take,                             // [1] battery
-                    take(5usize),                                   // [2..7] unknown
+                    le_u8,                                          // [2] unknown
+                    le_u8,                                          // [3] unknown
+                    VoicePrompt::take,                              // [4] voice prompt
+                    le_u8,                                          // [5] unknown
+                    le_u8,                                          // [6] unknown
                     a3135::structures::A3135FirmwareVersion::take,  // [7..12]
                     SerialNumber::take,                             // [12..28]
                     le_u8,                                          // [28] unknown
                 ),
-                |(volume, battery_level, _unknown, firmware_version, serial_number, _unknown2)| {
+                |(volume, battery_level, _, _, voice_prompt, _, _, firmware_version, serial_number, _)| {
                     Self {
                         volume,
                         battery_level,
+                        voice_prompt,
                         firmware_version,
                         serial_number,
                     }
@@ -87,7 +97,9 @@ impl ToPacket for A3135StateUpdatePacket {
         self.volume
             .bytes()
             .chain(iter::once(self.battery_level.0))
-            .chain([0u8; 5]) // unknown [2..7]
+            .chain([0x00, 0x01])                          // [2..4] unknown
+            .chain(self.voice_prompt.bytes())             // [4]
+            .chain([0x00, 0x03])                          // [5..7] unknown
             .chain(self.firmware_version.bytes())
             .chain(self.serial_number.as_str().as_bytes().iter().copied())
             .chain(iter::once(0u8))
@@ -153,7 +165,7 @@ impl ToPacket for A3135BrightnessPacket {
     }
 }
 
-/// CMD [01 7F] response: 2 bytes [ldac_state, unknown]
+/// CMD [01 7F] response: 1 byte [ldac_state]
 /// 0x00=Combine, 0x01=LDAC active
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct A3135LdacStatePacket {
@@ -168,10 +180,7 @@ impl FromPacketBody for A3135LdacStatePacket {
     ) -> IResult<&'a [u8], Self, E> {
         context(
             "A3135LdacStatePacket",
-            map(
-                (Ldac::take, le_u8), // [0] ldac state, [1] unknown extra byte
-                |(ldac, _unknown)| Self { ldac },
-            ),
+            map(Ldac::take, |ldac| Self { ldac }),
         )
         .parse_complete(input)
     }
@@ -185,7 +194,7 @@ impl ToPacket for A3135LdacStatePacket {
     }
 
     fn body(&self) -> Vec<u8> {
-        vec![self.ldac.bytes()[0], 0x00]
+        vec![self.ldac.bytes()[0]]
     }
 }
 

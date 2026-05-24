@@ -81,7 +81,7 @@ soundcore_device!(
 );
 
 const CONFIG: SoundcoreDeviceConfig = SoundcoreDeviceConfig {
-    checksum_kind: packet::ChecksumKind::None,
+    checksum_kind: packet::ChecksumKind::Suffix,
     rfcomm_service_selection_strategy: RfcommServiceSelectionStrategy::Constant(uuid!(
         "0cf12d31-fac3-4553-bd80-d6832e7b3135"
     )),
@@ -123,7 +123,7 @@ mod tests {
                     REQUEST_LDAC_STATE_COMMAND,
                     packet::Inbound::new(
                         REQUEST_LDAC_STATE_COMMAND,
-                        vec![0x01, 0x00], // 0x01=LDAC active, 0x00=unknown extra byte
+                        vec![0x01], // 0x01=LDAC active
                     ),
                 ),
                 (
@@ -164,6 +164,7 @@ mod tests {
             (SettingId::Volume, 14i32.into()),
             (SettingId::Ldac, true.into()),
             (SettingId::LedBrightness, Cow::from("medium").into()),
+            (SettingId::VoicePrompt, true.into()),
         ]);
     }
 }
