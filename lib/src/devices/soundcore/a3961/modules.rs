@@ -4,7 +4,10 @@ use crate::devices::soundcore::common::device::SoundcoreDeviceBuilder;
 
 use super::structures::A3961SoundModes;
 
+mod equalizer;
 mod sound_modes;
+
+pub use equalizer::a3961_equalizer_settings;
 
 impl<StateType> SoundcoreDeviceBuilder<StateType>
 where

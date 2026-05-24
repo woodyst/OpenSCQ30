@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
 use crate::devices::soundcore::{
-    a3961::{packets::inbound::A3961StateUpdatePacket, state::A3961State},
+    a3961::{
+        modules::a3961_equalizer_settings,
+        packets::inbound::A3961StateUpdatePacket,
+        state::A3961State,
+    },
     common::{
         device::fetch_state_from_state_update_packet,
         macros::soundcore_device,
-        modules::equalizer,
         packet::outbound::{RequestState, ToPacket},
     },
 };
@@ -23,7 +26,7 @@ soundcore_device!(
     async |builder| {
         builder.module_collection().add_state_update();
         builder.a3961_sound_modes();
-        builder.equalizer_tws(equalizer::common_settings()).await;
+        builder.equalizer_tws(a3961_equalizer_settings()).await;
         builder.tws_status();
         builder.dual_battery(5);
         builder.serial_number_and_dual_firmware_version();
