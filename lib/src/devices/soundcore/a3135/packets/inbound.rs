@@ -23,7 +23,7 @@ use crate::{
             },
             packet_manager::PacketHandler,
             state::Update,
-            structures::{BatteryLevel, EqualizerConfiguration, Ldac, SerialNumber, VoicePrompt, VolumeAdjustments},
+            structures::{AutoPowerOff, BatteryLevel, EqualizerConfiguration, Ldac, SerialNumber, VoicePrompt, VolumeAdjustments},
         },
     },
 };
@@ -36,8 +36,8 @@ pub const REQUEST_BRIGHTNESS_COMMAND: packet::Command = packet::Command([0x10, 0
 ///   [2]       unknown
 ///   [3]       unknown
 ///   [4]       voice prompt (0=off, 1=on)
-///   [5]       unknown
-///   [6]       unknown (possibly auto power off duration)
+///   [5]       auto power off is_enabled (0=off, 1=on)
+///   [6]       auto power off duration index (0=5m, 1=10m, 2=20m, 3=60m)
 ///   [7..12]   firmware version ASCII "X.Y.Z" (5 bytes)
 ///   [12..28]  serial number ASCII (16 bytes)
 ///   [28]      unknown (1 byte)
@@ -46,6 +46,7 @@ pub struct A3135StateUpdatePacket {
     pub volume: a3135::structures::Volume,
     pub battery_level: BatteryLevel,
     pub voice_prompt: VoicePrompt,
+    pub auto_power_off: AutoPowerOff,
     pub firmware_version: a3135::structures::A3135FirmwareVersion,
     pub serial_number: SerialNumber,
 }
@@ -65,17 +66,17 @@ impl FromPacketBody for A3135StateUpdatePacket {
                     le_u8,                                          // [2] unknown
                     le_u8,                                          // [3] unknown
                     VoicePrompt::take,                              // [4] voice prompt
-                    le_u8,                                          // [5] unknown
-                    le_u8,                                          // [6] unknown
+                    AutoPowerOff::take,                             // [5..7] auto power off
                     a3135::structures::A3135FirmwareVersion::take,  // [7..12]
                     SerialNumber::take,                             // [12..28]
                     le_u8,                                          // [28] unknown
                 ),
-                |(volume, battery_level, _, _, voice_prompt, _, _, firmware_version, serial_number, _)| {
+                |(volume, battery_level, _, _, voice_prompt, auto_power_off, firmware_version, serial_number, _)| {
                     Self {
                         volume,
                         battery_level,
                         voice_prompt,
+                        auto_power_off,
                         firmware_version,
                         serial_number,
                     }
@@ -99,7 +100,7 @@ impl ToPacket for A3135StateUpdatePacket {
             .chain(iter::once(self.battery_level.0))
             .chain([0x00, 0x01])                          // [2..4] unknown
             .chain(self.voice_prompt.bytes())             // [4]
-            .chain([0x00, 0x03])                          // [5..7] unknown
+            .chain(self.auto_power_off.bytes())           // [5..7]
             .chain(self.firmware_version.bytes())
             .chain(self.serial_number.as_str().as_bytes().iter().copied())
             .chain(iter::once(0u8))

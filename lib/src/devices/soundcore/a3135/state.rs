@@ -38,7 +38,7 @@ impl A3135State {
             ldac,
             led_brightness,
             adaptive_direction: Default::default(),
-            auto_power_off: AutoPowerOff::default(),
+            auto_power_off: packet.auto_power_off,
             voice_prompt: packet.voice_prompt,
             power_off_pending: Default::default(),
             equalizer_configuration: eq_packet.equalizer_configuration,
@@ -54,6 +54,7 @@ impl Update<A3135StateUpdatePacket> for A3135State {
             volume,
             battery_level,
             voice_prompt: _,
+            auto_power_off: _,
             firmware_version,
             serial_number,
         } = partial;
