@@ -2,7 +2,9 @@ use openscq30_lib_macros::Has;
 
 use crate::devices::soundcore::{
     a3961::{packets::inbound::A3961StateUpdatePacket, structures::A3961SoundModes},
-    common::structures::{DualBattery, DualFirmwareVersion, SerialNumber, TwsStatus},
+    common::structures::{
+        CommonEqualizerConfiguration, DualBattery, DualFirmwareVersion, SerialNumber, TwsStatus,
+    },
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Has)]
@@ -12,6 +14,7 @@ pub struct A3961State {
     firmware_version: DualFirmwareVersion,
     serial_number: SerialNumber,
     sound_modes: A3961SoundModes,
+    equalizer_configuration: CommonEqualizerConfiguration<1, 10>,
 }
 
 impl From<A3961StateUpdatePacket> for A3961State {
@@ -22,6 +25,7 @@ impl From<A3961StateUpdatePacket> for A3961State {
             firmware_version: value.firmware_version,
             serial_number: value.serial_number,
             sound_modes: value.sound_modes,
+            equalizer_configuration: value.equalizer_configuration,
         }
     }
 }

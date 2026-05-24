@@ -5,6 +5,7 @@ use crate::devices::soundcore::{
     common::{
         device::fetch_state_from_state_update_packet,
         macros::soundcore_device,
+        modules::equalizer,
         packet::outbound::{RequestState, ToPacket},
     },
 };
@@ -22,6 +23,7 @@ soundcore_device!(
     async |builder| {
         builder.module_collection().add_state_update();
         builder.a3961_sound_modes();
+        builder.equalizer_tws(equalizer::common_settings()).await;
         builder.tws_status();
         builder.dual_battery(5);
         builder.serial_number_and_dual_firmware_version();

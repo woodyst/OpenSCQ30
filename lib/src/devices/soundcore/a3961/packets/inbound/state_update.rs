@@ -22,7 +22,10 @@ use crate::{
                 outbound::ToPacket,
             },
             packet_manager::PacketHandler,
-            structures::{DualBattery, DualFirmwareVersion, SerialNumber, TwsStatus},
+            structures::{
+                CommonEqualizerConfiguration, DualBattery, DualFirmwareVersion, SerialNumber,
+                TwsStatus,
+            },
         },
     },
 };
@@ -33,6 +36,7 @@ pub struct A3961StateUpdatePacket {
     pub battery: DualBattery,
     pub firmware_version: DualFirmwareVersion,
     pub serial_number: SerialNumber,
+    pub equalizer_configuration: CommonEqualizerConfiguration<1, 10>,
     pub sound_modes: A3961SoundModes,
 }
 
@@ -43,6 +47,7 @@ impl Default for A3961StateUpdatePacket {
             battery: Default::default(),
             firmware_version: Default::default(),
             serial_number: Default::default(),
+            equalizer_configuration: Default::default(),
             sound_modes: Default::default(),
         }
     }
@@ -62,17 +67,25 @@ impl FromPacketBody for A3961StateUpdatePacket {
                     DualBattery::take,
                     DualFirmwareVersion::take,
                     SerialNumber::take,
-                    take(84usize), // bytes [32-115] unknown
-                    A3961AmbientSoundMode::take, // byte [116]
+                    CommonEqualizerConfiguration::<1, 10>::take, // bytes [32-43]
+                    take(72usize),                               // bytes [44-115] unknown
+                    A3961AmbientSoundMode::take,                 // byte [116]
                 ),
-                |(tws_status, battery, firmware_version, serial_number, _, ambient_sound_mode)| {
-                    Self {
-                        tws_status,
-                        battery,
-                        firmware_version,
-                        serial_number,
-                        sound_modes: A3961SoundModes { ambient_sound_mode },
-                    }
+                |(
+                    tws_status,
+                    battery,
+                    firmware_version,
+                    serial_number,
+                    equalizer_configuration,
+                    _,
+                    ambient_sound_mode,
+                )| Self {
+                    tws_status,
+                    battery,
+                    firmware_version,
+                    serial_number,
+                    equalizer_configuration,
+                    sound_modes: A3961SoundModes { ambient_sound_mode },
                 },
             ),
         )
@@ -94,7 +107,8 @@ impl ToPacket for A3961StateUpdatePacket {
             .chain(self.battery.bytes())
             .chain(self.firmware_version.bytes())
             .chain(self.serial_number.bytes())
-            .chain([0u8; 84]) // bytes [32-115]
+            .chain(self.equalizer_configuration.bytes()) // bytes [32-43]
+            .chain([0u8; 72]) // bytes [44-115]
             .chain([self.sound_modes.ambient_sound_mode as u8]) // byte [116]
             .collect()
     }
