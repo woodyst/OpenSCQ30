@@ -42,6 +42,7 @@ small-speakers = 小型スピーカ
 spoken-word = 会話
 treble-booster = トレブルブースター
 treble-reducer = トレブルリデューサー
+soundcore-a3961 = Soundcore Sport X10
 soundcore-development = Soundcoreのデバイスの開発情報
 sound-modes = サウンドモード
 equalizer-import-export = イコライザーをインポートとエクスポート

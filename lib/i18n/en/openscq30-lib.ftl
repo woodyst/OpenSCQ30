@@ -27,6 +27,7 @@ soundcore-a3935 = Soundcore Life A2 NC
 soundcore-a3959 = Soundcore P30i / Soundcore R50i NC
 soundcore-a3955 = Soundcore P40i
 soundcore-a3957 = Soundcore Liberty 5
+soundcore-a3961 = Soundcore Sport X10
 soundcore-development = Soundcore Development Information
 
 general = General

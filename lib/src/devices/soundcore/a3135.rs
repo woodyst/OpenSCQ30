@@ -165,7 +165,7 @@ mod tests {
             (SettingId::Ldac, true.into()),
             (SettingId::LedBrightness, Cow::from("medium").into()),
             (SettingId::VoicePrompt, true.into()),
-            (SettingId::AutoPowerOff, false.into()),
+            (SettingId::AutoPowerOff, "disabled".into()),
         ]);
     }
 }

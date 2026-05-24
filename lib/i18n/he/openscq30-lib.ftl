@@ -26,6 +26,7 @@ disconnected = מנותק
 soundcore-a3935 = Soundcore Life A2 NC
 soundcore-a3959 = Soundcore P30i / Soundcore R50i NC
 soundcore-a3955 = Soundcore P40i
+soundcore-a3961 = Soundcore Sport X10
 soundcore-development = מידע פיתוח Soundcore
 none = ללא
 general = כללי

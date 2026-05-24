@@ -5,6 +5,7 @@ soundcore-a3933 = Soundcore Life Note 3
 soundcore-a3936 = Soundcore Space A40
 soundcore-a3945 = Soundcore Life Note 3S
 soundcore-a3947 = Soundcore Liberty 4 NC
+soundcore-a3961 = Soundcore Sport X10
 soundcore-development = Soundcore Geliştirme Bilgisi
 general = Genel
 sound-modes = Ses Modları

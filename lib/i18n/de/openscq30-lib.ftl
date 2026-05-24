@@ -115,6 +115,7 @@ none = Nichts
 soundcore-a3040 = Soundcore Space Q45
 soundcore-a3116 = Soundcore Motion+
 soundcore-a3947 = Soundcore Liberty 4 NC
+soundcore-a3961 = Soundcore Sport X10
 soundcore-development = Soundcore Entwicklungsinformation
 equalizer-import-export = Equalizer Import/Export
 transport = Transport

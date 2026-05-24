@@ -24,6 +24,7 @@ soundcore-a3939 = Soundcore Life P3
 soundcore-a3935 = Soundcore Life A2 NC
 soundcore-a3959 = Soundcore P30i / Soundcore R50i NC
 soundcore-a3955 = Soundcore P40i
+soundcore-a3961 = Soundcore Sport X10
 soundcore-development = Informazioni sullo Sviluppo di Soundcore
 general = Generale
 sound-modes = Modalità Audio
