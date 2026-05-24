@@ -63,8 +63,44 @@ impl Volume {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct PowerOffPending(pub bool);
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct AdaptiveDirection(pub bool);
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, EnumIter, IntoStaticStr)]
+pub enum AdaptiveDirection {
+    #[default]
+    #[strum(serialize = "standing")]
+    Standing,
+    #[strum(serialize = "horizontal")]
+    Horizontal,
+    #[strum(serialize = "hanging")]
+    Hanging,
+}
+
+impl AdaptiveDirection {
+    pub fn from_byte(byte: u8) -> Self {
+        match byte {
+            0x01 => Self::Horizontal,
+            0x02 => Self::Hanging,
+            _ => Self::Standing,
+        }
+    }
+
+    pub fn to_byte(self) -> u8 {
+        match self {
+            Self::Standing => 0x00,
+            Self::Horizontal => 0x01,
+            Self::Hanging => 0x02,
+        }
+    }
+}
+
+impl Translate for AdaptiveDirection {
+    fn translate(&self) -> String {
+        match self {
+            Self::Standing => fl!("standing"),
+            Self::Horizontal => fl!("horizontal"),
+            Self::Hanging => fl!("hanging"),
+        }
+    }
+}
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, EnumIter, IntoStaticStr)]
 pub enum LedBrightness {

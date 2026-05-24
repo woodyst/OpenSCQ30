@@ -13,7 +13,7 @@ use tokio::sync::watch;
 use crate::{
     api::device,
     devices::soundcore::{
-        a3135::{self, state::A3135State},
+        a3135::{self, state::A3135State, structures::AdaptiveDirection},
         common::{
             modules::ModuleCollection,
             packet::{
@@ -202,7 +202,8 @@ impl ToPacket for A3135LdacStatePacket {
 pub const REQUEST_EQ_COMMAND: packet::Command = packet::Command([0x02, 0x89]);
 
 /// CMD [02 89] response: 57 bytes
-/// [0] unknown [1] unknown [2] active_preset_index
+/// [0] unknown [1] adaptive direction (0=standing, 1=horizontal, 2=hanging)
+/// [2] active_preset_index
 /// [3..21] Custom profile 1: 9 pairs of [amp_byte, freq_byte]
 /// [21..57] Custom profiles 2 and 3 (ignored)
 ///
@@ -211,6 +212,7 @@ pub const REQUEST_EQ_COMMAND: packet::Command = packet::Command([0x02, 0x89]);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct A3135EqPacket {
     pub equalizer_configuration: EqualizerConfiguration<1, 9, -60, 60, 1>,
+    pub adaptive_direction: AdaptiveDirection,
 }
 
 impl FromPacketBody for A3135EqPacket {
@@ -222,11 +224,13 @@ impl FromPacketBody for A3135EqPacket {
         context(
             "A3135EqPacket",
             map(take(57usize), |bytes: &[u8]| {
+                let adaptive_direction = AdaptiveDirection::from_byte(bytes[1]);
                 let active_preset = bytes[2] as u16;
                 // bytes[3..21]: 9 pairs of [amp_byte, freq_byte] for custom profile 1
                 let adj: [i16; 9] = array::from_fn(|i| bytes[3 + i * 2] as i16 - 120);
                 let volume_adjustments = VolumeAdjustments::new(adj);
                 Self {
+                    adaptive_direction,
                     equalizer_configuration: EqualizerConfiguration::new(
                         active_preset,
                         [volume_adjustments],
@@ -246,11 +250,10 @@ impl ToPacket for A3135EqPacket {
     }
 
     fn body(&self) -> Vec<u8> {
-        // Default response: active preset = 0 (Balanced), all bands at 0dB (0x78)
         const FREQ_CODES: [u8; 9] = [0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x01];
         let preset = self.equalizer_configuration.preset_id() as u8;
         let amps = self.equalizer_configuration.volume_adjustments_channel_1().bytes();
-        let mut body = vec![0x00, 0x00, preset];
+        let mut body = vec![0x01, self.adaptive_direction.to_byte(), preset];
         for i in 0..9 {
             body.push(amps[i] + 0x3C); // convert: adj+60+60 = adj+120 = device byte
             body.push(FREQ_CODES[i]);

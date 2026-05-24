@@ -219,3 +219,6 @@ adaptive-direction = Adaptive Direction
 
 balanced = Balanced
 extra-bass = Extra Bass
+standing = Standing
+horizontal = Horizontal
+hanging = Hanging

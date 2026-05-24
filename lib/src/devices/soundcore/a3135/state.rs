@@ -37,7 +37,7 @@ impl A3135State {
             volume: packet.volume,
             ldac,
             led_brightness,
-            adaptive_direction: Default::default(),
+            adaptive_direction: eq_packet.adaptive_direction,
             auto_power_off: packet.auto_power_off,
             voice_prompt: packet.voice_prompt,
             power_off_pending: Default::default(),

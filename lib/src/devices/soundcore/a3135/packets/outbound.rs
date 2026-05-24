@@ -12,8 +12,8 @@ pub fn set_brightness(brightness: a3135::structures::LedBrightness) -> packet::O
     packet::Outbound::new(packet::Command([0x10, 0x92]), brightness.bytes().collect())
 }
 
-pub fn set_adaptive_direction(enabled: bool) -> packet::Outbound {
-    packet::Outbound::new(packet::Command([0x02, 0x8A]), vec![enabled as u8])
+pub fn set_adaptive_direction(direction: a3135::structures::AdaptiveDirection) -> packet::Outbound {
+    packet::Outbound::new(packet::Command([0x02, 0x8A]), vec![direction.to_byte()])
 }
 
 pub fn confirm_adaptive_direction() -> packet::Outbound {

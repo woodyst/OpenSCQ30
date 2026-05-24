@@ -40,7 +40,7 @@ where
         }
         // Two-packet SET: CMD [02 8A] (no response) then CMD [02 8C] (waits for response)
         self.packet_io
-            .send_without_response(&a3135::packets::outbound::set_adaptive_direction(target.0))
+            .send_without_response(&a3135::packets::outbound::set_adaptive_direction(target))
             .await?;
         self.packet_io
             .send_with_response(&a3135::packets::outbound::confirm_adaptive_direction())
