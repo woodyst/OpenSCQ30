@@ -7,11 +7,12 @@ use crate::{
     api::settings::{CategoryId, SettingId},
     devices::soundcore::{
         a3135,
-        common::{modules::ModuleCollection, packet::PacketIOController},
+        common::{modules::ModuleCollection, packet, packet::PacketIOController},
     },
     macros::enum_subset,
 };
 
+mod packet_handler;
 mod setting_handler;
 mod state_modifier;
 
@@ -36,5 +37,9 @@ where
             .push(Box::new(state_modifier::AdaptiveDirectionStateModifier::new(
                 packet_io,
             )));
+        self.packet_handlers.set_handler(
+            packet::Command([0x02, 0x8C]),
+            Box::new(packet_handler::AdaptiveDirectionPacketHandler),
+        );
     }
 }
