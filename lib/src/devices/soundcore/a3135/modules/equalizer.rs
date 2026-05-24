@@ -7,14 +7,14 @@ use crate::{
     DeviceModel,
     api::device,
     devices::soundcore::{
-        a3135,
+        a3135::{self, packets::inbound::{A3135EqPacket, REQUEST_EQ_COMMAND}},
         common::{
             device::SoundcoreDeviceBuilder,
             modules::{
                 ModuleCollection,
                 equalizer::{EqualizerModuleSettings, EqualizerPreset},
             },
-            packet::PacketIOController,
+            packet::{self, PacketIOController, inbound::TryToPacket},
             state_modifier::StateModifier,
             structures::{EqualizerConfiguration, VolumeAdjustments},
         },
@@ -58,7 +58,15 @@ where
                     target.preset_id() as u8,
                 ))
                 .await?;
+            // Re-read EQ after preset change: hardware presets apply device-internal curves.
+            let eq: A3135EqPacket = self.packet_io
+                .send_with_response(&packet::Outbound::new(REQUEST_EQ_COMMAND, Vec::new()))
+                .await?
+                .try_to_packet()?;
+            state_sender.send_modify(|s| *s.get_mut() = eq.equalizer_configuration);
+            return Ok(());
         }
+
         if target.volume_adjustments() != state.volume_adjustments()
             && target.preset_id() == CUSTOM_PRESET_ID
         {
