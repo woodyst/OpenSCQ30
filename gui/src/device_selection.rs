@@ -52,56 +52,98 @@ impl DeviceSelectionModel {
     }
 
     pub fn view(&self) -> Element<'_, Message> {
-        widget::scrollable(
-            widget::column(
-                iter::once(
-                    widget::row![
-                        widget::text::title2(fl!("select-device")).width(Length::Fill),
-                        widget::button::standard(fl!("add-device")).on_press(Message::AddDevice),
-                    ]
-                    .align_y(alignment::Vertical::Center)
-                    .into(),
+        widget::responsive(|size| {
+            widget::scrollable(
+                widget::column(
+                    iter::once(if size.width < 450f32 {
+                        widget::column![
+                            widget::text::title2(fl!("select-device")),
+                            widget::button::standard(fl!("add-device"))
+                                .on_press(Message::AddDevice),
+                        ]
+                        .spacing(8)
+                        .into()
+                    } else {
+                        widget::row![
+                            widget::text::title2(fl!("select-device")).width(Length::Fill),
+                            widget::button::standard(fl!("add-device"))
+                                .on_press(Message::AddDevice),
+                        ]
+                        .align_y(alignment::Vertical::Center)
+                        .into()
+                    })
+                    .chain(self.items(size.width)),
                 )
-                .chain(self.items()),
+                .padding([0, 10])
+                .spacing(10),
             )
-            .padding([0, 10])
-            .spacing(10),
-        )
-        .width(Length::Fill)
-        .height(Length::Fill)
+            .width(Length::Fill)
+            .height(Length::Fill)
+        })
         .into()
     }
 
-    fn items(&self) -> impl Iterator<Item = Element<'_, Message>> {
+    fn items(&self, width: f32) -> impl Iterator<Item = Element<'_, Message>> {
         self.paired_devices
             .iter()
             .enumerate()
             .map(move |(index, device)| {
-                widget::row![
+                if width < 450f32 {
                     widget::column![
-                        widget::text::heading(device.model.translate()),
-                        widget::text::body(device.model.to_string()),
-                        widget::text::body(device.mac_address.to_string()),
+                        widget::column![
+                            widget::text::heading(device.model.translate()),
+                            widget::text::body(device.model.to_string()),
+                            widget::text::body(device.mac_address.to_string()),
+                        ]
+                        .push_maybe(
+                            device
+                                .is_demo
+                                .then(|| fl!("demo-mode").to_uppercase())
+                                .map(widget::text::body),
+                        )
+                        .width(Length::Fill),
+                        widget::row![
+                            widget::button::destructive(fl!("remove"))
+                                .on_press(Message::RemoveDevice(index)),
+                            widget::space().width(Length::Fixed(6f32)),
+                            widget::button::suggested(fl!("connect"))
+                                .on_press(Message::ConnectToDevice(index)),
+                        ]
+                        .align_y(alignment::Vertical::Center),
                     ]
-                    .push_maybe(
-                        device
-                            .is_demo
-                            .then(|| fl!("demo-mode").to_uppercase())
-                            .map(widget::text::body),
-                    )
-                    .width(Length::Fill),
-                    widget::button::destructive(fl!("remove"))
-                        .on_press(Message::RemoveDevice(index)),
-                    widget::space().width(Length::Fixed(6f32)),
-                    widget::button::suggested(fl!("connect"))
-                        .on_press(Message::ConnectToDevice(index)),
-                ]
-                .align_y(alignment::Vertical::Center)
-                .apply(widget::container)
-                .width(Length::Fill)
-                .padding(16)
-                .class(cosmic::style::Container::List)
-                .into()
+                    .spacing(8)
+                    .apply(widget::container)
+                    .width(Length::Fill)
+                    .padding(16)
+                    .class(cosmic::style::Container::List)
+                    .into()
+                } else {
+                    widget::row![
+                        widget::column![
+                            widget::text::heading(device.model.translate()),
+                            widget::text::body(device.model.to_string()),
+                            widget::text::body(device.mac_address.to_string()),
+                        ]
+                        .push_maybe(
+                            device
+                                .is_demo
+                                .then(|| fl!("demo-mode").to_uppercase())
+                                .map(widget::text::body),
+                        )
+                        .width(Length::Fill),
+                        widget::button::destructive(fl!("remove"))
+                            .on_press(Message::RemoveDevice(index)),
+                        widget::space().width(Length::Fixed(6f32)),
+                        widget::button::suggested(fl!("connect"))
+                            .on_press(Message::ConnectToDevice(index)),
+                    ]
+                    .align_y(alignment::Vertical::Center)
+                    .apply(widget::container)
+                    .width(Length::Fill)
+                    .padding(16)
+                    .class(cosmic::style::Container::List)
+                    .into()
+                }
             })
     }
 

@@ -71,19 +71,40 @@ impl QuickPresetsModel {
             widget::column![
                 widget::button::standard(fl!("create-quick-preset"))
                     .on_press(Message::ShowCreateQuickPresetDialog),
-                widget::column(quick_presets.iter().enumerate().map(|(i, preset)| {
-                    widget::row![
-                        widget::text(&preset.name).width(Length::Fill),
-                        widget::button::standard(fl!("activate"))
-                            .on_press(Message::ActivateQuickPreset(i)),
-                        widget::button::standard(fl!("edit")).on_press(Message::EditQuickPreset(i)),
-                        widget::button::destructive(fl!("delete"))
-                            .on_press(Message::ShowDeleteQuickPresetDialog(i)),
-                    ]
-                    .padding(10)
-                    .align_y(alignment::Vertical::Center)
-                    .into()
-                })),
+                widget::responsive(|size| {
+                    widget::column(quick_presets.iter().enumerate().map(|(i, preset)| {
+                        if size.width < 450f32 {
+                            widget::column![
+                                widget::text(&preset.name).padding([0, 10]),
+                                widget::row![
+                                    widget::button::standard(fl!("activate"))
+                                        .on_press(Message::ActivateQuickPreset(i)),
+                                    widget::button::standard(fl!("edit"))
+                                        .on_press(Message::EditQuickPreset(i)),
+                                    widget::button::destructive(fl!("delete"))
+                                        .on_press(Message::ShowDeleteQuickPresetDialog(i)),
+                                ]
+                                .align_y(alignment::Vertical::Center),
+                            ]
+                            .padding(10)
+                            .spacing(4)
+                            .into()
+                        } else {
+                            widget::row![
+                                widget::text(&preset.name).width(Length::Fill),
+                                widget::button::standard(fl!("activate"))
+                                    .on_press(Message::ActivateQuickPreset(i)),
+                                widget::button::standard(fl!("edit"))
+                                    .on_press(Message::EditQuickPreset(i)),
+                                widget::button::destructive(fl!("delete"))
+                                    .on_press(Message::ShowDeleteQuickPresetDialog(i)),
+                            ]
+                            .padding(10)
+                            .align_y(alignment::Vertical::Center)
+                            .into()
+                        }
+                    }))
+                }),
             ]
             .width(Length::Fill)
             .into()

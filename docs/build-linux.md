@@ -34,3 +34,45 @@ If it's inconvenient to install the latest version of [just](https://github.com/
 ## Runtime Dependencies
 
 - [cosmic-icons](https://github.com/pop-os/cosmic-icons/): if a package isn't available, clone the git repo and run `just install`.
+
+## Building on postmarketOS
+
+postmarketOS is based on Alpine Linux and uses `abuild` for packaging. The following instructions assume you are building inside the postmarketOS build environment (e.g. via `pmbootstrap` chroot or on device).
+
+### Dependencies
+
+```sh
+apk add rust cargo pkgconfig dbus-dev libxkbcommon-dev just
+```
+
+### Build
+
+1. Clone the repository and enter the project directory.
+2. Run `just build-gui-fast` (or `just build-gui` for a fully optimized build).
+3. The compiled binary is at `build-output/openscq30-gui`.
+
+### Packaging with abuild (optional)
+
+To create an Alpine/package-compatible package, add a pmaport under `pmaports/main/openscq30/` with the following minimal `APKBUILD`:
+
+```sh
+pkgname=openscq30
+_pkgname=OpenSCQ30
+pkgver=2.8.0
+pkgrel=0
+pkgdesc="GUI for Soundcore headphones and earbuds"
+url="https://github.com/Oppzippy/OpenSCQ30"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="just rust cargo pkgconfig dbus-dev libxkbcommon-dev"
+depends=""
+source="$pkgname-$pkgver.tar.gz::https://github.com/Oppzippy/$_pkgname/archive/refs/tags/v$pkgver.tar.gz"
+build() {
+    just build-gui-fast
+}
+package() {
+    install -Dm755 build-output/openscq30-gui "$pkgdir/usr/bin/openscq30-gui"
+}
+```
+
+Then run `abuild-rsync` or `abuild -r` from the pmaports directory to build.
